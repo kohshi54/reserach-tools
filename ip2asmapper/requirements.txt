@@ -1,2 +1,7 @@
 pytricia
 ipaddress
+###
+networkx
+matplotlib
+scipy
+

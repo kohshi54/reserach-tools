@@ -1,0 +1,37 @@
+Unknown Protocol	Unknown protocol (or unsupported by PcapPlusPlus)
+Ethernet			Ethernet protocol
+IPv4				IPv4 protocol
+IPv6				IPv6 protocol
+IP					IP protocol (aggregation bitmask of IPv4 and IPv6 protocols)
+TCP					TCP protocol
+UDP					UDP protocol
+HTTPRequest			HTTP request protocol
+HTTPResponse		HTTP response protocol
+HTTP				HTTP protocol (aggregation bitmask of HTTP request and HTTP response protocols)
+ARP					ARP protocol
+VLAN				VLAN protocol
+ICMP				ICMP protocol (currently not supported by PcapPlusPlus)
+PPPoESession		PPPoE session protocol
+PPPoEDiscovery		PPPoE discovery protocol
+PPPoE				PPPoE protocol (aggregation bitmask of PPPoESession and PPPoEDiscovery protocols)
+DNS					DNS protocol
+MPLS				MPLS protocol
+GREv0				GRE version 0 protocol
+GREv1				GRE version 1 protocol
+GRE					GRE protocol (aggregation bitmask of GREv0 and GREv1 protocols)
+PPP_PPTP			PPP for PPTP protocol
+SSL					SSL/TLS protocol
+SLL					SLL (Linux cooked capture) protocol
+DHCP				DHCP/BOOTP protocol
+NULL_LOOPBACK		Null/Loopback protocol
+IGMP				IGMP protocol
+IGMPv1				IGMPv1 protocol
+IGMPv2				IGMPv2 protocol
+IGMPv3				IGMPv3 protocol
+GenericPayload		Generic payload (no specific protocol)
+VXLAN				VXLAN protocol
+SIPRequest			SIP request protocol
+SIPResponse			SIP response protocol
+SIP					SIP protocol (aggregation bitmask of SIPRequest and SIPResponse protocols)
+SDP					SDP protocol
+PacketTrailer		Packet trailer 
