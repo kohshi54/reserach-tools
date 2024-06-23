@@ -74,7 +74,6 @@ int main(int argc, char* argv[])
 		//uint32_t reverseHash = getReverseHash(parsedPacket); //hash5Tuple() already consider reverse hash
 		//std::cout << "hash:" << hash << " " << srcIP.toString() << " " << dstIP.toString() << " " << srcPort << " " << dstPort << std::endl;
 		//std::cout << "hash:" << hash << " " << clientIP.toString() << " " << serverIP.toString() << " " << clientPort << " " << serverPort << std::endl;
-		//13.248.151.210 10.245.245.159 443 58242 4247022545
 		//ofs << "hash:" << hash << " " << srcIP.toString() << " " << dstIP.toString() << " " << srcPort << " " << dstPort << " ";
 		//if (tcpConnInfos.find(hash) == tcpConnInfos.end() && tcpConnInfos.find(reverseHash) == tcpConnInfos.end()) {
 /*	
