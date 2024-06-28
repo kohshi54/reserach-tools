@@ -21,6 +21,23 @@ def sum_matrix(mx):
 			sum += elem
 	return sum
 
+def hop_avg(mx, mxvpn):
+    gapsum = 0
+    hopsum = 0
+    hopsumvpn = 0
+    for i in range(len(mx)):
+        for j in range(len(mxvpn)):
+            gap = mxvpn[i][j] - mx[i][j]
+            print(gap, end=" ")
+            gapsum += gap
+            hopsum += mx[i][j]
+            hopsumvpn += mxvpn[i][j]
+        print()
+    elemnum = len(mx) * len(mxvpn)
+    print(f"hopavg: {hopsum / elemnum}")
+    print(f"hopavgvpn: {hopsumvpn / elemnum}")
+    print(f"gapavg: {gapsum / elemnum}")
+
 print("extracte aspath")
 as_paths = []
 for line in lines:
@@ -86,6 +103,7 @@ for i in range(len(userasns)):
 		if nx.has_path(G, userasns[i], serverasns[j]):
 			hops = nx.shortest_path_length(G, source=userasns[i], target=serverasns[j])
 			hopmx[i][j] = hops
+			#hopmx[i][j] = hops * rate
 
 #print_matrix(hopmx)
 print(f"hopsum: {sum_matrix(hopmx)}")
@@ -98,8 +116,10 @@ for i in range(len(userasns)):
 		if nx.has_path(G, userasns[i], serverasns[j]):
 			vpn2s = nx.shortest_path_length(G, source=59103, target=serverasns[j])
 			hopmxvpn[i][j] = c2vpn + vpn2s
+			#hopmxvpn[i][j] = (c2vpn + vpn2s) * rate
 
 #print_matrix(hopmxvpn)
 print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
 
+hop_avg(hopmx, hopmxvpn)
 
