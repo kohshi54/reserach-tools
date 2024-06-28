@@ -100,10 +100,11 @@ if nx.has_path(G, 1234, 5678):
 hopmx = [[0 for _ in range(len(serverasns))] for _ in range(len(userasns))]
 for i in range(len(userasns)):
 	for j in range(len(serverasns)):
-		if nx.has_path(G, userasns[i], serverasns[j]):
-			hops = nx.shortest_path_length(G, source=userasns[i], target=serverasns[j])
-			hopmx[i][j] = hops
-			#hopmx[i][j] = hops * rate
+		if userasns[i] in G and serverasns[j] in G:
+			if nx.has_path(G, userasns[i], serverasns[j]):
+				hops = nx.shortest_path_length(G, source=userasns[i], target=serverasns[j])
+				hopmx[i][j] = hops
+				#hopmx[i][j] = hops * rate
 
 #print_matrix(hopmx)
 print(f"hopsum: {sum_matrix(hopmx)}")
@@ -111,12 +112,14 @@ print(f"hopsum: {sum_matrix(hopmx)}")
 # with vpn
 hopmxvpn = [[0 for _ in range(len(serverasns))] for _ in range(len(userasns))]
 for i in range(len(userasns)):
-	c2vpn = nx.shortest_path_length(G, source=userasns[i], target=59103)
-	for j in range(len(serverasns)):
-		if nx.has_path(G, userasns[i], serverasns[j]):
-			vpn2s = nx.shortest_path_length(G, source=59103, target=serverasns[j])
-			hopmxvpn[i][j] = c2vpn + vpn2s
-			#hopmxvpn[i][j] = (c2vpn + vpn2s) * rate
+	if userasns[i] in G:
+		c2vpn = nx.shortest_path_length(G, source=userasns[i], target=59103)
+		for j in range(len(serverasns)):
+			if serverasns[j] in G:
+				if nx.has_path(G, userasns[i], serverasns[j]):
+					vpn2s = nx.shortest_path_length(G, source=59103, target=serverasns[j])
+					hopmxvpn[i][j] = c2vpn + vpn2s
+					#hopmxvpn[i][j] = (c2vpn + vpn2s) * rate
 
 #print_matrix(hopmxvpn)
 print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
