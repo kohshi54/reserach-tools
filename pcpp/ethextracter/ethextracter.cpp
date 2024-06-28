@@ -1,7 +1,7 @@
 #include "ethextracter.hpp"
 
 /*
-	pcap ip extracter
+	pcap eth extracter
 	argv[1] pcapfile
 	argv[2] serverIP_range
 	argv[3] (option) outfile list of extracted ethernet addresses will be written to this file when specified 
