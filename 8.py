@@ -172,8 +172,8 @@ for i in range(len(userasns)):
 					hopmxvpn[i][j] = c2vpn + vpn2s
 					gravitymx = hopmxvpn[i][j] * weightmx[i][j]
 """
-vpnasn = 59103
-hopmxvpn = np.zeros_like(weightmx)
+
+"""
 for i, userasn in enumerate(userasns):
 	if userasn in G:
 		if nx.has_path(G, userasn, vpnasn):
@@ -183,7 +183,32 @@ for i, userasn in enumerate(userasns):
 					if nx.has_path(G, vpnasn, serverasn):
 						vpn2s = nx.shortest_path_length(G, source=vpnasn, target=serverasn)
 						hopmxvpn[i][j] = c2vpn + vpn2s
-						gravitymxvpn = hopmxvpn[i][j] * weightmx[i][j]
+						gravitymxvpn[i][j] = hopmxvpn[i][j] * weightmx[i][j]
+"""
+# optimized use cache
+vpnasn = 59103
+hopmxvpn = np.zeros_like(weightmx)
+c2vpnhops = {}
+for userasn in userasns:
+	if userasn in G:
+		try:
+			c2vpnhops[userasn] = nx.shortest_path_length(G, source=userasn, target=vpnasn)
+		except nx.NetworkXNoPath:
+			c2vpnhops[userasn] = None
+
+vpn2shops = {}
+for serverasn in serverasns:
+	if serverasn in G:
+		try:
+			vpn2shops[serverasn] = nx.shortest_path_length(G, source=vpnasn, target=serverasn)
+		except nx.NetworkXNoPath:
+			vpn2shops[serverasn] = None
+
+for i, userasn in enumerate(userasns):
+	for j, serverasn in enumerate(serverasns):
+		if c2vpnhops[userasn] and vpn2shops[serverasn]:
+			hopmxvpn[i][j] = c2vpnhops[useasn] + vpn2shops[serverasn]
+			gravitymxvpn[i][j] = hopmxvpn[i][j] * weightmx[i][j]
 
 #print_matrix(hopmxvpn)
 #print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
