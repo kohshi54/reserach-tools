@@ -128,6 +128,7 @@ userrates = np.array(userrates)
 serverrates = np.array(serverraets)
 weightmx = np.outer(userrates, serverrates)
 gravitymx = np.zeros_like(weightmx)
+gravitymxvpn = np.zeros_like(weightmx)
 
 print("hops no vpn")
 """
@@ -182,7 +183,7 @@ for i, userasn in enumerate(userasns):
 					if nx.has_path(G, vpnasn, serverasn):
 						vpn2s = nx.shortest_path_length(G, source=vpnasn, target=serverasn)
 						hopmxvpn[i][j] = c2vpn + vpn2s
-						gravitymx = hopmxvpn[i][j] * weightmx[i][j]
+						gravitymxvpn = hopmxvpn[i][j] * weightmx[i][j]
 
 #print_matrix(hopmxvpn)
 #print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
@@ -190,3 +191,5 @@ for i, userasn in enumerate(userasns):
 print("cal")
 hop_avg_fast(hopmx, hopmxvpn)
 print(f"gravitycost: {sum_matrix_fast(gravitymx)}")
+print(f"gravitycost: {sum_matrix_fast(gravitymxvpn)}")
+
