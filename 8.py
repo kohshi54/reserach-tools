@@ -74,20 +74,32 @@ for path in as_paths:
 print("user")
 # user asn list
 userasns = []
+userrates = []
 with open('userasn.list', 'r') as users:
 	for line in users:
-		#userasn,cnt,rate = line.strip().split()
-		userasn,cnt = line.strip().split()
+		userasn,cnt,rate = line.strip().split()
+		#userasn,cnt = line.strip().split()
 		userasns.append(int(userasn))
+		userrates.append(float(rate))
 
 print("server")
 # server asn list
 serverasns = []
+serverrates = []
 with open('serverasn.list', 'r') as servers:
 	for line in servers:
-		#serverasn,cnt,rate = line.strip().split()
-		serverasn,cnt = line.strip().split()
+		serverasn,cnt,rate = line.strip().split()
+		#serverasn,cnt = line.strip().split()
 		serverasns.append(int(serverasn))
+		serverrates.append(float(rate))
+
+# cal weight user <-> server (gravity model)
+weightmx = [[0 for _ in range(len(serverasns))] for _ in range(len(userasns))]
+for i in range(len(userasns)):
+	for j in range(len(serverasns)):
+		weightmx[i][j] = userrates[i] * serverrates[j]
+
+gravitymx = [[0 for _ in range(len(serverasns))] for _ in range(len(userasns))]
 
 print("hops")
 """
@@ -102,9 +114,8 @@ for i in range(len(userasns)):
 	for j in range(len(serverasns)):
 		if userasns[i] in G and serverasns[j] in G:
 			if nx.has_path(G, userasns[i], serverasns[j]):
-				hops = nx.shortest_path_length(G, source=userasns[i], target=serverasns[j])
-				hopmx[i][j] = hops
-				#hopmx[i][j] = hops * rate
+				hopmx[i][j] = nx.shortest_path_length(G, source=userasns[i], target=serverasns[j])
+				gravitymx[i][j] = hopmx[i][j] * weightmx[i][j]
 
 #print_matrix(hopmx)
 print(f"hopsum: {sum_matrix(hopmx)}")
@@ -119,7 +130,7 @@ for i in range(len(userasns)):
 				if nx.has_path(G, userasns[i], serverasns[j]):
 					vpn2s = nx.shortest_path_length(G, source=59103, target=serverasns[j])
 					hopmxvpn[i][j] = c2vpn + vpn2s
-					#hopmxvpn[i][j] = (c2vpn + vpn2s) * rate
+					gravitymx = hopmxvpn[i][j] * weightmx[i][j]
 
 #print_matrix(hopmxvpn)
 print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
