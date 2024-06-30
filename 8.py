@@ -206,9 +206,10 @@ for serverasn in serverasns:
 
 for i, userasn in enumerate(userasns):
 	for j, serverasn in enumerate(serverasns):
-		if c2vpnhops[userasn] and vpn2shops[serverasn]:
-			hopmxvpn[i][j] = c2vpnhops[useasn] + vpn2shops[serverasn]
-			gravitymxvpn[i][j] = hopmxvpn[i][j] * weightmx[i][j]
+		if userasn in c2vpnhops and serverasn in vpn2shops:
+			if c2vpnhops[userasn] and vpn2shops[serverasn]:
+				hopmxvpn[i][j] = c2vpnhops[useasn] + vpn2shops[serverasn]
+				gravitymxvpn[i][j] = hopmxvpn[i][j] * weightmx[i][j]
 
 #print_matrix(hopmxvpn)
 #print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
