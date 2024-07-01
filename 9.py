@@ -101,7 +101,7 @@ def load_server_data(serverfile):
 			serverrates.append(float(rate))
 	return serverasns, serverrates
 
-def calculate_hops_gravity(G, userasns, userrates, serverasns, serverrates, weightmx):
+def calculate_hops_gravity(G, userasns, serverasns, weightmx):
 	hopmx = np.zeros_like(weightmx)
 	gravitymx = np.zeros_like(weightmx)
 	for i, userasn in enumerate(userasns):
@@ -118,7 +118,7 @@ def calculate_hops_gravity(G, userasns, userrates, serverasns, serverrates, weig
 
 # with vpn
 # optimized use cache
-def calculate_hops_with_vpn_gravity(G, userasns, userrates, serverasns, serverrates, weightmx):
+def calculate_hops_with_vpn_gravity(G, userasns, serverasns, weightmx):
 	gravitymxvpn = np.zeros_like(weightmx)
 	vpnasn = 59103
 	hopmxvpn = np.zeros_like(weightmx)
@@ -169,9 +169,9 @@ def main():
 
 	# get hops
 	print("hops")
-	hopmx, gravitymx = calculate_hops_gravity(G, userasns, userrates, serverasns, serverrates, weightmx)
+	hopmx, gravitymx = calculate_hops_gravity(G, userasns, serverasns, weightmx)
 	print("hops with vpn")
-	hopmxvpn, gravitymxvpn = calculate_hops_with_vpn_gravity(G, userasns, userrates, serverasns, serverrates, weightmx)
+	hopmxvpn, gravitymxvpn = calculate_hops_with_vpn_gravity(G, userasns, serverasns, weightmx)
 
 	print("cal")
 	hop_avg_fast(hopmx, hopmxvpn)
