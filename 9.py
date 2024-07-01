@@ -158,7 +158,7 @@ def main():
 	# use ndarray for speed
 	userrates = np.array(userrates)
 	serverrates = np.array(serverrates)
-	gravity = np.outer(serverrates, userrates)
+	gravity = np.outer(userrates, serverrates)
 
 	# get hops
 	print("hops")
