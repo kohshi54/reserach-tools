@@ -101,16 +101,16 @@ def load_server_data(serverfile):
 			serverrates.append(float(rate))
 	return serverasns, serverrates
 
-def calculate_hops_gravity(G, userasns, serverasns, weightmx):
-	hopmx = np.zeros_like(weightmx)
-	gravitymx = np.zeros_like(weightmx)
+def calculate_hops_gravity(G, userasns, serverasns, gravity):
+	hopmx = np.zeros_like(gravity)
+	gravitymx = np.zeros_like(gravity)
 	for i, userasn in enumerate(userasns):
 		for j, serverasn in enumerate(serverasns):
 			if userasn in G and serverasn in G:
 				if nx.has_path(G, userasn, serverasn):
 					hopmx[i][j] = nx.shortest_path_length(G, source=userasn, target=serverasn)
 	
-	gravitymx = hopmx * weightmx
+	gravitymx = hopmx * gravity
 
 	#print_matrix(hopmx)
 	#print(f"hopsum: {sum_matrix(hopmx)}")
@@ -118,10 +118,10 @@ def calculate_hops_gravity(G, userasns, serverasns, weightmx):
 
 # with vpn
 # optimized use cache
-def calculate_hops_with_vpn_gravity(G, userasns, serverasns, weightmx):
-	gravitymxvpn = np.zeros_like(weightmx)
+def calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity):
+	gravitymxvpn = np.zeros_like(gravity)
 	vpnasn = 59103
-	hopmxvpn = np.zeros_like(weightmx)
+	hopmxvpn = np.zeros_like(gravity)
 	c2vpnhops = {}
 	for userasn in userasns:
 		if userasn in G:
@@ -144,7 +144,7 @@ def calculate_hops_with_vpn_gravity(G, userasns, serverasns, weightmx):
 				if c2vpnhops[userasn] and vpn2shops[serverasn]:
 					hopmxvpn[i][j] = c2vpnhops[userasn] + vpn2shops[serverasn]
 	
-	gravitymxvpn = hopmxvpn * weightmx
+	gravitymxvpn = hopmxvpn * gravity
 
 	#print_matrix(hopmxvpn)
 	#print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
@@ -165,13 +165,13 @@ def main():
 	# use ndarray for speed
 	userrates = np.array(userrates)
 	serverrates = np.array(serverrates)
-	weightmx = np.outer(userrates, serverrates)
+	gravity = np.outer(userrates, serverrates)
 
 	# get hops
 	print("hops")
-	hopmx, gravitymx = calculate_hops_gravity(G, userasns, serverasns, weightmx)
+	hopmx, gravitymx = calculate_hops_gravity(G, userasns, serverasns, gravity)
 	print("hops with vpn")
-	hopmxvpn, gravitymxvpn = calculate_hops_with_vpn_gravity(G, userasns, serverasns, weightmx)
+	hopmxvpn, gravitymxvpn = calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity)
 
 	print("cal")
 	hop_avg_fast(hopmx, hopmxvpn)
