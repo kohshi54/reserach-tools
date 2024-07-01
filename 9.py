@@ -103,23 +103,23 @@ def load_server_data(serverfile):
 
 def calculate_hops_gravity(G, userasns, serverasns, gravity):
 	hopmx = np.zeros_like(gravity)
-	gravitymx = np.zeros_like(gravity)
+	costmx = np.zeros_like(gravity)
 	for i, userasn in enumerate(userasns):
 		for j, serverasn in enumerate(serverasns):
 			if userasn in G and serverasn in G:
 				if nx.has_path(G, userasn, serverasn):
 					hopmx[i][j] = nx.shortest_path_length(G, source=userasn, target=serverasn)
 	
-	gravitymx = hopmx * gravity
+	costmx = hopmx * gravity
 
 	#print_matrix(hopmx)
 	#print(f"hopsum: {sum_matrix(hopmx)}")
-	return hopmx, gravitymx
+	return hopmx, costmx
 
 # with vpn
 # optimized use cache
 def calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity):
-	gravitymxvpn = np.zeros_like(gravity)
+	costmxvpn = np.zeros_like(gravity)
 	vpnasn = 59103
 	hopmxvpn = np.zeros_like(gravity)
 	c2vpnhops = {}
@@ -144,11 +144,11 @@ def calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity):
 				if c2vpnhops[userasn] and vpn2shops[serverasn]:
 					hopmxvpn[i][j] = c2vpnhops[userasn] + vpn2shops[serverasn]
 	
-	gravitymxvpn = hopmxvpn * gravity
+	costmxvpn = hopmxvpn * gravity
 
 	#print_matrix(hopmxvpn)
 	#print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
-	return hopmxvpn, gravitymxvpn
+	return hopmxvpn, costmxvpn
 
 def main():
 	print("extracte aspath")
@@ -169,14 +169,14 @@ def main():
 
 	# get hops
 	print("hops")
-	hopmx, gravitymx = calculate_hops_gravity(G, userasns, serverasns, gravity)
+	hopmx, costmx = calculate_hops_gravity(G, userasns, serverasns, gravity)
 	print("hops with vpn")
-	hopmxvpn, gravitymxvpn = calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity)
+	hopmxvpn, costmxvpn = calculate_hops_with_vpn_gravity(G, userasns, serverasns, gravity)
 
 	print("cal")
 	hop_avg_fast(hopmx, hopmxvpn)
-	print(f"gravitycost: {sum_matrix_fast(gravitymx)}")
-	print(f"gravitycostvpn: {sum_matrix_fast(gravitymxvpn)}")
+	print(f"gravitycost: {sum_matrix_fast(costmx)}")
+	print(f"gravitycostvpn: {sum_matrix_fast(costmxvpn)}")
 
 if __name__ == '__main__':
 	main()
