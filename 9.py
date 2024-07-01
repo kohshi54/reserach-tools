@@ -115,8 +115,7 @@ def calculate_hops(G, userasns, serverasns):
 
 # with vpn
 # optimized use cache
-def calculate_hops_with_vpn(G, userasns, serverasns):
-	vpnasn = 59103
+def calculate_hops_with_vpn(G, userasns, serverasns, vpnasn):
 	hopmxvpn = np.zeros((len(userasns), len(serverasns)))
 	c2vpnhops = {}
 	for userasn in userasns:
@@ -166,7 +165,7 @@ def main():
 	hopmx = calculate_hops(G, userasns, serverasns)
 	costmx = hopmx * gravity
 	print("hops with vpn")
-	hopmxvpn = calculate_hops_with_vpn(G, userasns, serverasns)
+	hopmxvpn = calculate_hops_with_vpn(G, userasns, serverasns, 59103)
 	costmxvpn = hopmxvpn * gravity
 
 	print("cal")
