@@ -143,6 +143,13 @@ def calculate_hops_with_vpn(G, userasns, serverasns, vpnasn):
 	#print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
 	return hopmxvpn
 
+#when placed two vpn server (shorter hop is picked)
+def calculate_hops_with_two_vpn(G, userasns, serverasns, vpnone, vpntwo):
+	hopmxvpnone = calculate_hops_with_vpn(G, userasns, serverasns, vpnone)
+	hopmxvpntwo = calculate_hops_with_vpn(G, userasns, serverasns, vpntwo)
+	hopmxtwovpn = np.minimum(hopmxvpntop, hopmxvpnsecond)
+	return hopmxtwovpn
+
 def calculate_top_betweenness_centrality_node(G, userasns, serverasns):
 	relay_nodes = {}
 	for i, userasn in enumerate(userasns):
@@ -196,6 +203,16 @@ def main():
 	relay_nodes = calculate_top_betweenness_centrality_node(G, userasns, serverasns)
 	sorted_relay_nodes = sorted(relay_nodes.items(), key = lambda x : x[1], reverse = True)[:50]
 	print(sorted_relay_nodes)
+	"""
+
+	"""
+	#place two vpn server (shorter path is picked)
+	hopmxtwovpn = calculate_hops_with_two_vpn(6939, 13335)
+	costmxtwovpn = hopmxtwovpn * gravity
+	hopsumtwovpn = np.sum(hopmxtwovpn)
+	elemnum = hopmxtwovpn.size
+	print(f"hopavgtwovpn: {hopsumtwovpn / elemnum}")
+	print(f"gravitycostvpn: {sum_matrix_fast(costmxtwovpn)}")
 	"""
 
 if __name__ == '__main__':
