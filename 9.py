@@ -143,6 +143,24 @@ def calculate_hops_with_vpn(G, userasns, serverasns, vpnasn):
 	#print(f"hopsumvpn: {sum_matrix(hopmxvpn)}")
 	return hopmxvpn
 
+def calculate_top_betweenness_centrality_node(G, userasns, serverasns):
+	relay_nodes = {}
+	for i, userasn in enumerate(userasns):
+		for j, serverasn in enumerate(serverasns):
+			if userasn in G and serverasn in G:
+				if nx.has_path(G, userasn, serverasn):
+					path_nodes = nx.shortest_path(G, source=userasn, target=serverasn)
+					for node in path_nodes:
+						if node == userasn or node == serverasn:
+							continue
+						if node in relay_nodes:
+							relay_nodes[node] += 1
+						else:
+							relay_nodes[node] = 1
+
+	#print(relay_nodes)
+	return relay_nodes
+
 def main():
 	print("extracte aspath")
 	aspaths = parse_aspath('aspath.list')
@@ -172,6 +190,13 @@ def main():
 	hop_avg_fast(hopmx, hopmxvpn)
 	print(f"gravitycost: {sum_matrix_fast(costmx)}")
 	print(f"gravitycostvpn: {sum_matrix_fast(costmxvpn)}")
+
+	"""
+	#get top 50 betweenness centrality node
+	relay_nodes = calculate_top_betweenness_centrality_node(G, userasns, serverasns)
+	sorted_relay_nodes = sorted(relay_nodes.items(), key = lambda x : x[1], reverse = True)[:50]
+	print(sorted_relay_nodes)
+	"""
 
 if __name__ == '__main__':
 	main()
