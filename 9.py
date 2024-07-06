@@ -89,6 +89,15 @@ def load_user_data(userfile):
 			userrates.append(float(rate))
 	return userasns, userrates
 
+def load_rtt_data(rttfile):
+	# asn rtt list
+	asnrtt = {}
+	with open(rttfile, 'r') as rtts:
+		for line in rtts:
+			asn,rtt = line.split()
+			asnrtt[int(asn)] = float(rtt)
+	return asnrtt
+
 def load_server_data(serverfile):
 	# server asn list
 	serverasns = []
@@ -168,6 +177,44 @@ def calculate_top_betweenness_centrality_node(G, userasns, serverasns):
 	#print(relay_nodes)
 	return relay_nodes
 
+def calculate_hops_vpn2server(G, serverasns, vpnasn):
+	vpn2shops = {}
+	for serverasn in serverasns:
+		if serverasn in G:
+			try:
+				vpn2shops[serverasn] = nx.shortest_path_length(G, source=vpnasn, target=serverasn)
+			except nx.NetworkXNoPath:
+				vpn2shops[serverasn] = None
+	return vpn2shops
+
+def rtt_hops_correlation(rttfile, G, serverasns, vpnasn):
+	asnrtt = load_rtt_data(rttfile)
+	asnhop = calculate_hops_vpn2server(G, serverasns, vpnasn)
+	rtt = []
+	hops = []
+	for asn in asnrtt:
+		if asn in asnhop:
+			rtt.append(asnrtt[asn])
+			hops.append(asnhop[asn])
+
+	rtt = np.array(rtt)
+	hops = np.array(hops)
+	
+	correlation_matrix = np.corrcoef(rtt, hops)
+	correlation_coefficient = correlation_matrix[0, 1]
+	print(f"rtt hop correlation: {correlation_coefficient}")
+	
+	rtt = rtt.get()
+	hops = hops.get()
+	print(f"{rtt.size}")
+	print(f"{hops.size}")
+	plt.scatter(rtt, hops)
+	plt.xlabel('rTT')
+	plt.ylabel('hops')
+	plt.title('rtt hops correlation')
+	plt.show()
+ 
+
 def main():
 	print("extracte aspath")
 	aspaths = parse_aspath('aspath.list')
@@ -213,6 +260,11 @@ def main():
 	elemnum = hopmxtwovpn.size
 	print(f"hopavgtwovpn: {hopsumtwovpn / elemnum}")
 	print(f"gravitycostvpn: {sum_matrix_fast(costmxtwovpn)}")
+	"""
+
+	"""
+	#get correlation between AS hops and rtt
+	rtt_hops_correlation('asnrtt2.list', G, serverasns, 59103)
 	"""
 
 if __name__ == '__main__':
