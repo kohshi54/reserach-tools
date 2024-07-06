@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 #import cupy as np
+import matplotlib.pyplot as plt
 
 def print_path(path):
 	for asn in path:
