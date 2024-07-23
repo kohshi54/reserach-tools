@@ -21,8 +21,8 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 	if comb:
 		hopmx = calculate_hops_with_vpns(G, userasns, serverasns, comb)
 	else:
-		return (0,0)
-		#hopmx = calculate_direct_path_length(G, userasns, serverasns)
+		#return (0,0)
+		hopmx = calculate_direct_path_length(G, userasns, serverasns)
 	costmxvpn = hopmx * gravity
 	"""
 	hopsumvpn = np.sum(hopmx)
@@ -164,7 +164,41 @@ def calculate_direct_path_length(G, userasns, serverasns):
 	])
 	return hopmxvpn
 
+def calculate_path_length_via_single_vpn(G, userasns, serverasns, vpn):
+	c2vpnhops = {}
+	for userasn in userasns:
+		if userasn in G:
+			try:
+				c2vpnhops[userasn] = nx.shortest_path_length(G, source=userasn, target=vpn)
+			except nx.NetworkXNoPath:
+				c2vpnhops[userasn] = None
+	
+	vpn2shops = {}
+	for serverasn in serverasns:
+		if serverasn in G:
+			try:
+				vpn2shops[serverasn] = nx.shortest_path_length(G, source=vpn, target=serverasn)
+			except nx.NetworkXNoPath:
+				vpn2shops[serverasn] = None
+
+	hopmxvpn = np.array([
+		[
+			(c2vpnhops[userasn] + vpn2shops[serverasn]) if c2vpnhops.get(userasn) and vpn2shops.get(serverasn) else 0
+			for serverasn in serverasns
+		]
+		for userasn in userasns
+	])
+	return hopmxvpn
+
 def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
+	hopmxvpn = np.full((len(userasns), len(serverasns)), float('inf'))
+	for node in vpnasns:
+		node_hopmx = calculate_path_length_via_single_vpn(G, userasns, serverasns, node)
+		hopmxvpn = np.minimum(hopmxvpn, node_hopmx)
+	hopmxvpn[hopmxvpn == float('inf')] = 0
+	return hopmxvpn
+
+	""" works but takes too much time
 	hopmxvpn = np.zeros((len(userasns), len(serverasns)))
 	for i,userasn in enumerate(userasns):
 		if userasn in G:
@@ -184,8 +218,9 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 						hopmxvpn[i][j] = min_length
 					else:
 						hopmxvpn[i][j] = 0
-					
 	"""
+					
+	""" selected vpn could differ in c2v and v2s (vpn has to be the same)
 	c2vpnhops = {}
 	for userasn in userasns:
 		if userasn in G:
@@ -247,11 +282,13 @@ def main():
 	serverrates = np.array(serverrates)
 	gravity = np.outer(userrates, serverrates)
 
-	#length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [59103])
-	#print(f"{length}, {weighted_length}")
+	realvpnasn = 59103
+	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
+	print(f"{length}, {weighted_length}")
+	write_file([realvpnasn], [0], length, weighted_length, 'kk.outfile')
 
 	#"""
-	nodes = load_relay_nodes('top1.txt')
+	nodes = load_relay_nodes('top5.txt')
 	n = len(nodes)
 	for i in range(1 << n):
 		comb = []
