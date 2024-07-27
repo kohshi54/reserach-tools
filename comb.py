@@ -16,13 +16,7 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 		return (0,0)
 		hopmx = calculate_direct_path_length(G, userasns, serverasns)
 	costmxvpn = hopmx * gravity
-	"""
-	hopsumvpn = np.sum(hopmx)
-	elemnum = hopmx.size
-	print(f"hopavgvpn: {hopsumvpn / elemnum}")
-	print(f"gravitycostvpn: {np.sum(costmxvpn)}")
-	return (hopsumvpn/elemnum,np.sum(costmxvpn))
-	"""
+
 	valid_hopmx = hopmx[(hopmx != 0)]
 	valid_costmxvpn = costmxvpn[(costmxvpn != 0)]
 	hopsumvpn = np.sum(valid_hopmx)
@@ -276,7 +270,7 @@ def main():
 	nodes = parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightFlg.noweighted)
 	total = sum(nodes.values())
 	top50_relay_nodes = dict(sorted(nodes.items(), key = lambda x : x[1], reverse = True)[:50])
-	with open('relay_nodes.noweighted.list', 'a') as outfile:
+	with open('relay_nodes.noweighted.list', 'w') as outfile:
 		for node,cnt in top50_relay_nodes.items():
 			outfile.write(f"{node} {cnt} {(cnt/total)*100}%\n")
 	top5_relay_node_keys = list(top50_relay_nodes.keys())[:1]
