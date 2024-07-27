@@ -4,19 +4,8 @@ import networkx as nx
 import cupy as np
 import multiprocessing as mp
 from enum import Enum
-#from memory_profiler import profile
-
-""" 2^50 oom """
-def create_all_combination(nodes):
-	n = len(nodes)
-	all_comb = []
-	for i in range(1 << n):
-		comb = []
-		for j in range(n):
-			if (i & (1 << j)):
-				comb.append(nodes[j])
-		all_comb.append(comb)
-	return all_comb
+from memory_profiler import profile
+import os
 
 #@profile
 def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
@@ -127,45 +116,48 @@ def parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightF
 
 	return relay_nodes
 
-#@profile
-def parse_aspath(aspath_file):
-	with open(aspath_file, 'r') as file:
-		lines = file.readlines()
+def readvpdata(vpdir):
+	#vpfilelist = ['./vp/aspath.oregon.list', './vp/aspath.dixie.list', '/vp/aspath.amsix.list']
+	vpfilelist = os.listdir(vpdir)
+	print(vpfilelist)
+	for i in range(len(vpfilelist)):
+		vpfilelist[i] = os.path.join(vpdir, vpfilelist[i])
+	for aspathfile in vpfilelist:
+		with open(aspathfile, 'r') as f:
+			for line in f:
+				yield line
 
-	as_paths = []
-	for line in lines:
-		if line.startswith("ASPATH:"):
-			path = line[len("ASPATH:"):].strip().split()
-			base_path = []
-			has_branch = False;
-			prev_asn = None
-			for asn in path:
-				if '{' in asn and '}' in asn:
-					has_branch = True
-					asn_set = asn.strip('{}').split(',')
-					for aa in asn_set:
-						expanded_path = base_path + [int(aa)]
-						as_paths.append(expanded_path)
-						#print_path(expanded_path)
-				else:
-					asn_int = int(asn)
-					if asn_int != prev_asn:
-						base_path.append(asn_int)
-						prev_asn = asn_int
-			if not has_branch:
-				as_paths.append(base_path)
-				#print_path(base_path)
-	return as_paths
+def aspath_parser(line):
+	if line.startswith("ASPATH:"):
+		path = line[len("ASPATH:"):].strip().split()
+		base_path = []
+		has_branch = False;
+		prev_asn = None
+		for asn in path:
+			if '{' in asn and '}' in asn:
+				has_branch = True
+				asn_set = asn.strip('{}').split(',')
+				for aa in asn_set:
+					expanded_path = base_path + [int(aa)]
+					return expanded_path
+					#as_paths.append(expanded_path)
+					#print_path(expanded_path)
+			else:
+				asn_int = int(asn)
+				if asn_int != prev_asn:
+					base_path.append(asn_int)
+					prev_asn = asn_int
+		if not has_branch:
+			return base_path
+			#as_paths.append(base_path)
+			#print_path(base_path)
+	return []
 
-#@profile
-def create_graph(as_paths):
-	G = nx.Graph()
-	for path in as_paths:
-		for i in range(len(path) - 1):
-			prev = path[i]
-			cur = path[i + 1]
-			G.add_edge(prev, cur)
-	return G
+def add_path_to_graph(G, pathlist):
+	for i in range(len(pathlist) - 1):
+		prev = pathlist[i]
+		cur = pathlist[i + 1]
+		G.add_edge(prev, cur)
 
 #@profile
 def load_user_data(userfile, weightF=weightFlg.pktsbased):
@@ -266,10 +258,12 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 	hopmxvpn[hopmxvpn == float('inf')] = 0
 	return hopmxvpn
 
-#@profile
+@profile
 def main():
-	aspaths = parse_aspath('./vp/aspath.allvp.list')
-	G = create_graph(aspaths)
+	G = nx.Graph()
+	for line in readvpdata('./testvp'): # uses yiled for lower memory usage (not loading all paths at once)
+		pathlist = aspath_parser(line)
+		add_path_to_graph(G, pathlist)
 	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightFlg.pktsbased)
 	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightFlg.pktsbased)
 	userrates = np.array(userrates)
@@ -300,17 +294,6 @@ def main():
 		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
 		write_file(comb, node_rank, length, weighted_length, 'test.allvp.outfile')
 	#"""
-
-	""" oom(2^50 set of list is
-	#nodes = (1, 2, 3, 4, 5)
-	#nodes = [6939,3356]
-	nodes = load_relay_nodes('top50.txt')
-	all_comb = create_all_combination(nodes)
-	for comb in all_comb:
-		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
-		write_file(comb, length, weighted_length)
-		print(length, weighted_length)
-	"""
 
 if __name__ == '__main__':
 	main()
