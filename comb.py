@@ -270,19 +270,19 @@ def main():
 	serverrates = np.array(serverrates)
 	gravity = np.outer(userrates, serverrates)
 
-	"""
+	#"""
 	nodes = parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightFlg.noweighted)
+	total = sum(nodes.values())
+	top50_relay_nodes = dict(sorted(nodes.items(), key = lambda x : x[1], reverse = True)[:50])
 	with open('relay_nodes.noweighted.list', 'a') as outfile:
-		for node,cnt in nodes.items():
-			outfile.write(f"{node} {cnt}\n")
-	"""
-
-	realvpnasn = 59103
-	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
-	write_file([realvpnasn], [0], length, weighted_length, 'test.allvp.outfile')
+		for node,cnt in top50_relay_nodes.items():
+			outfile.write(f"{node} {cnt} {(cnt/total*100}%\n")
+	top5_relay_node_keys = list(top50_relay_nodes.keys())[:5]
+	#"""
 
 	#"""
-	nodes = load_relay_nodes('../top5withgravity/top5.txt')
+	nodes = top5_relay_node_keys
+	#nodes = load_relay_nodes('../top5withgravity/top5.txt')
 	n = len(nodes)
 	for i in range(1 << n):
 		comb = []
@@ -294,6 +294,10 @@ def main():
 		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
 		write_file(comb, node_rank, length, weighted_length, 'test.allvp.outfile')
 	#"""
+
+	realvpnasn = 59103
+	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
+	write_file([realvpnasn], [0], length, weighted_length, 'test.allvp.outfile')
 
 if __name__ == '__main__':
 	main()
