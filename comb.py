@@ -4,7 +4,7 @@ import networkx as nx
 import cupy as np
 import multiprocessing as mp
 from enum import Enum
-from memory_profiler import profile
+#from memory_profiler import profile
 import os
 
 #@profile
@@ -99,6 +99,8 @@ def parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightF
 	for result in results:
 		userasn,serverasn,node_list = result
 		for node in node_list:
+			if node == userasn or node == serverasn:
+				continue
 			if node in relay_nodes:
 				if weightF == weightFlg.noweighted:
 					relay_nodes[node] += 1
@@ -258,7 +260,7 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 	hopmxvpn[hopmxvpn == float('inf')] = 0
 	return hopmxvpn
 
-@profile
+#@profile
 def main():
 	G = nx.Graph()
 	for line in readvpdata('./testvp'): # uses yiled for lower memory usage (not loading all paths at once)
@@ -276,8 +278,8 @@ def main():
 	top50_relay_nodes = dict(sorted(nodes.items(), key = lambda x : x[1], reverse = True)[:50])
 	with open('relay_nodes.noweighted.list', 'a') as outfile:
 		for node,cnt in top50_relay_nodes.items():
-			outfile.write(f"{node} {cnt} {(cnt/total*100}%\n")
-	top5_relay_node_keys = list(top50_relay_nodes.keys())[:5]
+			outfile.write(f"{node} {cnt} {(cnt/total)*100}%\n")
+	top5_relay_node_keys = list(top50_relay_nodes.keys())[:1]
 	#"""
 
 	#"""
