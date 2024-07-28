@@ -6,6 +6,9 @@ import multiprocessing as mp
 from enum import Enum
 #from memory_profiler import profile
 import os
+import json
+
+alldata = []
 
 #@profile
 def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
@@ -13,7 +16,7 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 	if comb:
 		hopmx = calculate_hops_with_vpns(G, userasns, serverasns, comb)
 	else:
-		return (0,0)
+		#return (0,0)
 		hopmx = calculate_direct_path_length(G, userasns, serverasns)
 	costmxvpn = hopmx * gravity
 
@@ -22,6 +25,7 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 	hopsumvpn = np.sum(valid_hopmx)
 	valid_elemnum = valid_hopmx.size
 	gravitycostvpn = np.sum(valid_costmxvpn)
+
 	print(f"hopavgvpn: {hopsumvpn / valid_elemnum}")
 	#print(f"hopavgvpn: {valid_hopmx.mean()}")
 	print(f"gravitycostvpn: {gravitycostvpn}")
@@ -31,6 +35,24 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 	print(f"path length")
 	for length, count in zip(unique_pathlength, counts):
 		print(f"{length}:{count} ({(count/valid_hopmx.size):.20f})")
+
+	def outjson():
+		pathdata = {}
+		pathdata["relayset"] = list(comb)
+		pathdata["hopavg"] = float(hopsumvpn/valid_elemnum)
+		pathdata["weightedavg"] = float(gravitycostvpn)
+		pathdata["pathinfo"] = {
+			"validpathrate": float(valid_hopmx.size/hopmx.size),
+			"allpath": int(hopmx.size),
+			"validpath": int(valid_hopmx.size)
+		}
+		pathdata["pathlength"] = {}
+		for length, count in zip(unique_pathlength, counts):
+			pathdata["pathlength"][float(length)] = {"cnt": int(count), "rate": f"{float(count/valid_hopmx.size):.6f}"}
+		alldata.append(pathdata)
+
+	outjson()
+
 	return (hopsumvpn/valid_elemnum, gravitycostvpn)
 
 def write_file(comb, node_rank, length, weighted_length, outfilename):
@@ -257,7 +279,7 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 #@profile
 def main():
 	G = nx.Graph()
-	for line in readvpdata('./testvp'): # uses yiled for lower memory usage (not loading all paths at once)
+	for line in readvpdata('./vp'): # uses yiled for lower memory usage (not loading all paths at once)
 		pathlist = aspath_parser(line)
 		add_path_to_graph(G, pathlist)
 	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightFlg.pktsbased)
@@ -273,12 +295,12 @@ def main():
 	with open('relay_nodes.noweighted.list', 'w') as outfile:
 		for node,cnt in top50_relay_nodes.items():
 			outfile.write(f"{node} {cnt} {(cnt/total)*100}%\n")
-	top5_relay_node_keys = list(top50_relay_nodes.keys())[:1]
+	top5_relay_node_keys = list(top50_relay_nodes.keys())[:5]
 	#"""
 
 	#"""
 	nodes = top5_relay_node_keys
-	#nodes = load_relay_nodes('../top5withgravity/top5.txt')
+	#nodes = load_relay_nodes('../top5withgravity/top1.txt')
 	n = len(nodes)
 	for i in range(1 << n):
 		comb = []
@@ -294,6 +316,11 @@ def main():
 	realvpnasn = 59103
 	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
 	write_file([realvpnasn], [0], length, weighted_length, 'test.allvp.outfile')
+
+	with open('./out.json', 'w') as outf:
+		#jsondata = json.dumps(alldata)
+		#print(jsondata)
+		json.dump(alldata, outf)
 
 if __name__ == '__main__':
 	main()
