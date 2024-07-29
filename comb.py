@@ -123,26 +123,21 @@ def parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightF
 				tasks.append((userasn, G, serverasn))
 		results = pool.starmap(cal_relay_nodes, tasks)
 
+	uidxmp = {userasn: i for i,userasn in enumerate(userasns)}
+	sidxmp = {serverasn: i for i,serverasn in enumerate(serverasns)}
+
 	relay_nodes = {}
 	for result in results:
 		userasn,serverasn,node_list = result
 		for node in node_list:
 			if node == userasn or node == serverasn:
 				continue
-			if node in relay_nodes:
-				if weightF == weightFlg.noweighted:
-					relay_nodes[node] += 1
-				elif weightF == weightFlg.pktsbased:
-					relay_nodes[node] += gravity[userasn][serverasn] # not working userasn/serverasn should be index
-				elif weightF == weightFlg.connbased:
-					relay_nodes[node] += gravity[userasn][serverasn] # not working userasn/serverasn should be index
-			else:
-				if weightF == weightFlg.noweighted:
-					relay_nodes[node] = 1
-				elif weightF == weightFlg.pktsbased:
-					relay_nodes[node] = gravity[userasn][serverasn] # not working userasn/serverasn should be index
-				elif weightF == weightFlg.connbased:
-					relay_nodes[node] = gravity[userasn][serverasn] # not working userasn/serverasn should be index
+			if weightF == weightFlg.noweighted:
+				relay_nodes[node] = relay_nodes.get(node, 0) + 1
+			elif weightF == weightFlg.pktsbased:
+				relay_nodes[node] = relay_nodes.get(node, 0.0) + gravity[uidxmp[userasn]][sidxmp[serverasn]]
+			elif weightF == weightFlg.connbased:
+				relay_nodes[node] = relay_nodes.get(node, 0.0) + gravity[uidxmp[userasn]][sidxmp[serverasn]]
 
 	return relay_nodes
 
@@ -150,8 +145,9 @@ def readvpdata(vpdir):
 	#vpfilelist = ['./vp/aspath.oregon.list', './vp/aspath.dixie.list', '/vp/aspath.amsix.list']
 	vpfilelist = os.listdir(vpdir)
 	print(vpfilelist)
-	for i in range(len(vpfilelist)):
-		vpfilelist[i] = os.path.join(vpdir, vpfilelist[i])
+#	for i in range(len(vpfilelist)):
+#		vpfilelist[i] = os.path.join(vpdir, vpfilelist[i])
+	vpfilelist = [os.path.join(vpdir, vpfname) for vpfname in vpfilelist]
 	for aspathfile in vpfilelist:
 		with open(aspathfile, 'r') as f:
 			for line in f:
@@ -218,7 +214,7 @@ def load_server_data(serverfile, weightF=weightFlg.pktsbased):
 			if weightF == weightFlg.pktsbased:
 				serverrates.append(float(pktsrate))
 			elif weightF == weightFlg.connbased:
-				userrates.append(float(connrate))
+				serverrates.append(float(connrate))
 	return serverasns, serverrates
 
 #@profile
@@ -294,22 +290,22 @@ def main():
 	for line in readvpdata('./testvp'): # uses yiled for lower memory usage (not loading all paths at once)
 		pathlist = aspath_parser(line)
 		add_path_to_graph(G, pathlist)
-	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightFlg.pktsbased)
-	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightFlg.pktsbased)
+	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightFlg.connbased)
+	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightFlg.connbased)
 	gravity = np.outer(np.array(userrates), np.array(serverrates))
 
 	#"""
-	nodes = parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightFlg.noweighted)
+	nodes = parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightFlg.connbased)
 	total = sum(nodes.values())
-	top50_relay_nodes = dict(sorted(nodes.items(), key = lambda x : x[1], reverse = True)[:50])
-	with open('relay_nodes.noweighted.list', 'w') as outfile:
-		for node,cnt in top50_relay_nodes.items():
+	top50_relay_nodes = sorted(nodes.items(), key = lambda x: x[1], reverse = True)[:50] # memory utility... use iter?
+	with open('tt.relay_nodes.connbased.list', 'w') as outfile:
+		for node,cnt in top50_relay_nodes:
 			outfile.write(f"{node} {cnt} {(cnt/total)*100}%\n")
-	top5_relay_node_keys = list(top50_relay_nodes.keys())[:5]
+	top5_relay_node_keys = [node for node,_ in top50_relay_nodes[:5]]
 	#"""
 
-	#nodes = top5_relay_node_keys
-	nodes = load_relay_nodes('../top5withgravity/top5.txt')
+	nodes = top5_relay_node_keys
+	#nodes = load_relay_nodes('../top5withgravity/top5.txt')
 
 	#"""
 	for comb,node_rank in create_all_combination(nodes): # generator in use to avoid oom even when 2^50
@@ -321,7 +317,7 @@ def main():
 	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
 	write_file([realvpnasn], [0], length, weighted_length, 'test.allvp.outfile')
 
-	with open('./out.json', 'w') as outf:
+	with open('./intest.out.json', 'w') as outf:
 		#jsondata = json.dumps(alldata)
 		#print(jsondata)
 		json.dump(alldata, outf)
