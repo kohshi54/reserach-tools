@@ -11,6 +11,18 @@ import json
 alldata = []
 
 #@profile
+def create_all_combination(nodes):
+	n = len(nodes)
+	for i in range(1 << n):
+		comb = []
+		node_rank = []
+		for j in range(n):
+			if (i & (1 << j)):
+				comb.append(nodes[j])
+				node_rank.append(j+1)
+		yield comb, node_rank
+
+#@profile
 def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 	print(comb)
 	if comb:
@@ -229,7 +241,7 @@ def calculate_direct_path_length(G, userasns, serverasns):
 					hopmx[i][j] = nx.shortest_path_length(G, source=userasn, target=serverasn)	
 	"""
 
-	hopmxvpn = np.zeros((len(userasns), len(serverasns)))
+	#hopmxvpn = np.zeros((len(userasns), len(serverasns)))
 	c2shops = parallel_shortest_path_length(userasns, G, serverasns)
 	hopmxvpn = np.array([
 		[
@@ -279,14 +291,12 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 #@profile
 def main():
 	G = nx.Graph()
-	for line in readvpdata('./vp'): # uses yiled for lower memory usage (not loading all paths at once)
+	for line in readvpdata('./testvp'): # uses yiled for lower memory usage (not loading all paths at once)
 		pathlist = aspath_parser(line)
 		add_path_to_graph(G, pathlist)
 	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightFlg.pktsbased)
 	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightFlg.pktsbased)
-	userrates = np.array(userrates)
-	serverrates = np.array(serverrates)
-	gravity = np.outer(userrates, serverrates)
+	gravity = np.outer(np.array(userrates), np.array(serverrates))
 
 	#"""
 	nodes = parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightFlg.noweighted)
@@ -298,17 +308,11 @@ def main():
 	top5_relay_node_keys = list(top50_relay_nodes.keys())[:5]
 	#"""
 
+	#nodes = top5_relay_node_keys
+	nodes = load_relay_nodes('../top5withgravity/top5.txt')
+
 	#"""
-	nodes = top5_relay_node_keys
-	#nodes = load_relay_nodes('../top5withgravity/top1.txt')
-	n = len(nodes)
-	for i in range(1 << n):
-		comb = []
-		node_rank = []
-		for j in range(n):
-			if (i & (1 << j)):
-				comb.append(nodes[j])
-				node_rank.append(j+1)
+	for comb,node_rank in create_all_combination(nodes): # generator in use to avoid oom even when 2^50
 		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
 		write_file(comb, node_rank, length, weighted_length, 'test.allvp.outfile')
 	#"""
