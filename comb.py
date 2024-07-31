@@ -157,26 +157,19 @@ def aspath_parser(line):
 	if line.startswith("ASPATH:"):
 		path = line[len("ASPATH:"):].strip().split()
 		base_path = []
-		has_branch = False;
 		prev_asn = None
 		for asn in path:
 			if '{' in asn and '}' in asn:
-				has_branch = True
 				asn_set = asn.strip('{}').split(',')
 				for aa in asn_set:
 					expanded_path = base_path + [int(aa)]
-					return expanded_path
-					#as_paths.append(expanded_path)
-					#print_path(expanded_path)
+					return expanded_path # wrong...?
 			else:
 				asn_int = int(asn)
 				if asn_int != prev_asn:
 					base_path.append(asn_int)
 					prev_asn = asn_int
-		if not has_branch:
-			return base_path
-			#as_paths.append(base_path)
-			#print_path(base_path)
+		return base_path
 	return []
 
 def add_path_to_graph(G, pathlist):
@@ -304,23 +297,23 @@ def main():
 	top5_relay_node_keys = [node for node,_ in top50_relay_nodes[:5]]
 	#"""
 
-	nodes = top5_relay_node_keys
-	#nodes = load_relay_nodes('../top5withgravity/top5.txt')
+	#nodes = top5_relay_node_keys
+	nodes = load_relay_nodes('../top5withgravity/top5.txt')
 
-	#"""
+	"""
 	for comb,node_rank in create_all_combination(nodes): # generator in use to avoid oom even when 2^50
 		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
-		write_file(comb, node_rank, length, weighted_length, 'test.allvp.outfile')
-	#"""
+		write_file(comb, node_rank, length, weighted_length, 'intest.allvp.outfile')
 
 	realvpnasn = 59103
 	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
-	write_file([realvpnasn], [0], length, weighted_length, 'test.allvp.outfile')
+	write_file([realvpnasn], [0], length, weighted_length, 'intest.allvp.outfile')
 
 	with open('./intest.out.json', 'w') as outf:
 		#jsondata = json.dumps(alldata)
 		#print(jsondata)
 		json.dump(alldata, outf)
+	#"""
 
 if __name__ == '__main__':
 	main()
