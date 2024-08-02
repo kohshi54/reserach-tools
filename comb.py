@@ -8,7 +8,7 @@ from enum import Enum
 import os
 import json
 
-alldata = []
+alldetails = []
 
 #@profile
 def create_all_combination(nodes):
@@ -61,7 +61,7 @@ def calculate_avg_path_length(G, userasns, serverasns, gravity, comb):
 		pathdata["pathlength"] = {}
 		for length, count in zip(unique_pathlength, counts):
 			pathdata["pathlength"][float(length)] = {"cnt": int(count), "rate": f"{float(count/valid_hopmx.size):.6f}"}
-		alldata.append(pathdata)
+		alldetails.append(pathdata)
 
 	outjson()
 
@@ -163,14 +163,15 @@ def aspath_parser(line):
 				asn_set = asn.strip('{}').split(',')
 				for aa in asn_set:
 					expanded_path = base_path + [int(aa)]
-					return expanded_path # wrong...?
+					yield expanded_path # expand ASPATH: 123 124 {125,126} -> (123 124 125), (123 124 126)
+				return # stop iteration
 			else:
 				asn_int = int(asn)
 				if asn_int != prev_asn:
 					base_path.append(asn_int)
 					prev_asn = asn_int
-		return base_path
-	return []
+		yield base_path
+	return # stop iteration
 
 def add_path_to_graph(G, pathlist):
 	for i in range(len(pathlist) - 1):
@@ -280,9 +281,11 @@ def calculate_hops_with_vpns(G, userasns, serverasns, vpnasns):
 #@profile
 def main():
 	G = nx.Graph()
-	for line in readvpdata('./vp'): # uses yiled for lower memory usage (not loading all paths at once)
-		pathlist = aspath_parser(line)
-		add_path_to_graph(G, pathlist)
+	for line in readvpdata('./../latest/vp/'): # uses yiled for lower memory usage (not loading all paths at once)
+		for pathlist in aspath_parser(line):
+			add_path_to_graph(G, pathlist)
+	#print(f"{G.number_of_nodes()} {G.number_of_edges()}")
+
 	weightF = weightFlg.pktsbased
 	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightF)
 	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightF)
@@ -311,9 +314,9 @@ def main():
 	write_file([realvpnasn], [0], length, weighted_length, 'allvp.outfile')
 
 	with open('./allvp.detail.json', 'w') as outf:
-		#jsondata = json.dumps(alldata)
+		#jsondata = json.dumps(alldetails)
 		#print(jsondata)
-		json.dump(alldata, outf)
+		json.dump(alldetails, outf)
 	#"""
 
 if __name__ == '__main__':
