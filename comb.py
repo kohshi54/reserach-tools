@@ -114,6 +114,7 @@ class weightFlg(Enum):
 	noweighted = 1
 	pktsbased = 2
 	connbased = 3
+	ipcntbased = 4
 
 def parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightF=weightFlg.noweighted):
 	with mp.Pool(int(mp.cpu_count()/2)) as pool:
@@ -134,9 +135,7 @@ def parallel_shortest_path_relay_nodes(userasns, G, serverasns, gravity, weightF
 				continue
 			if weightF == weightFlg.noweighted:
 				relay_nodes[node] = relay_nodes.get(node, 0) + 1
-			elif weightF == weightFlg.pktsbased:
-				relay_nodes[node] = relay_nodes.get(node, 0.0) + gravity[uidxmp[userasn]][sidxmp[serverasn]]
-			elif weightF == weightFlg.connbased:
+			elif weightF in {weightFlg.pktsbased, weightFlg.pktsbased, weightFlg.pktsbased}:
 				relay_nodes[node] = relay_nodes.get(node, 0.0) + gravity[uidxmp[userasn]][sidxmp[serverasn]]
 
 	return relay_nodes
@@ -186,13 +185,14 @@ def load_user_data(userfile, weightF=weightFlg.pktsbased):
 	userrates = []
 	with open(userfile, 'r') as users:
 		for line in users:
-			userasn,pktsnum,pktsrate,connnum,connrate = line.strip().split()
-			#userasn,cnt = line.strip().split()
+			userasn,pktsnum,pktsrate,connnum,connrate,ipcntnum,ipcntrate = line.strip().split()
 			userasns.append(int(userasn))
 			if weightF == weightFlg.pktsbased:
 				userrates.append(float(pktsrate))
 			elif weightF == weightFlg.connbased:
 				userrates.append(float(connrate))
+			elif weightF == weightFlg.ipcntbased:
+				userrates.append(float(ipcntrate))
 	return userasns, userrates
 
 #@profile
@@ -202,13 +202,14 @@ def load_server_data(serverfile, weightF=weightFlg.pktsbased):
 	serverrates = []
 	with open(serverfile, 'r') as servers:
 		for line in servers:
-			serverasn,pktsnum,pktsrate,connnum,connrate = line.strip().split()
-			#serverasn,cnt = line.strip().split()
+			serverasn,pktsnum,pktsrate,connnum,connrate,ipcntnum,ipcntrate = line.strip().split()
 			serverasns.append(int(serverasn))
 			if weightF == weightFlg.pktsbased:
 				serverrates.append(float(pktsrate))
 			elif weightF == weightFlg.connbased:
 				serverrates.append(float(connrate))
+			elif weightF == weightFlg.ipcntbased:
+				serverrates.append(float(ipcntbased))
 	return serverasns, serverrates
 
 #@profile
@@ -287,8 +288,8 @@ def main():
 	#print(f"{G.number_of_nodes()} {G.number_of_edges()}")
 
 	weightF = weightFlg.pktsbased
-	userasns, userrates = load_user_data('./userasn.pkts.conn.list', weightF)
-	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.list', weightF)
+	userasns, userrates = load_user_data('./userasn.pkts.conn.ipcnt.list', weightF)
+	serverasns, serverrates = load_server_data('./serverasn.pkts.conn.ipcnt.list', weightF)
 	gravity = np.outer(np.array(userrates), np.array(serverrates))
 
 	#"""
@@ -308,6 +309,7 @@ def main():
 	for comb,node_rank in create_all_combination(nodes): # generator in use to avoid oom even when 2^50
 		length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, comb)
 		write_file(comb, node_rank, length, weighted_length, 'allvp.outfile')
+	#"""
 
 	realvpnasn = 59103
 	length,weighted_length = calculate_avg_path_length(G, userasns, serverasns, gravity, [realvpnasn])
@@ -317,7 +319,6 @@ def main():
 		#jsondata = json.dumps(alldetails)
 		#print(jsondata)
 		json.dump(alldetails, outf)
-	#"""
 
 if __name__ == '__main__':
 	main()
