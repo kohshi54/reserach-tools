@@ -209,7 +209,7 @@ def load_server_data(serverfile, weightF=weightFlg.pktsbased):
 			elif weightF == weightFlg.connbased:
 				serverrates.append(float(connrate))
 			elif weightF == weightFlg.ipcntbased:
-				serverrates.append(float(ipcntbased))
+				serverrates.append(float(ipcntrate))
 	return serverasns, serverrates
 
 #@profile
