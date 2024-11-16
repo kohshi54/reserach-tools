@@ -1,13 +1,20 @@
 '''
-input: serverasnrtt.csv
+input: serverasnrtt.csv/clientasnrtt.csv
 output: routing_matrix.csv
 
-x.x.x.x : [[59103, 59103], [59103, 2907], [2907, 2907], [2907, 20940], [20940, x.x.x.x]] 
+input: CU,ASN,ASname,ipaddr,server/cli,syntime(ms),synacktime(ms),rttのリスト(ipは重複する)
+output
+x.x.x.x : [[59103, 59103], [59103, 2907], [2907, 2907], [2907, 20940], [20940, x.x.x.x]]
+↓
+        [[59103, 59103], [59103, 2907], [2907, 2907], [2907, 20940], [20940, x.x.x.x]]
+x.x.x.x 1,1,1,1,1,1
 
 '''
 
 import pandas as pd
 import pytricia
+import csv
+import sys
 
 iprange2path = pytricia.PyTricia()
 
@@ -35,7 +42,7 @@ def make_edge(aspath):
 '''
 iprangeとパスの対応を作る
 '''
-fullroute_ipv4_df = pd.read_csv('./fullroute_ipv4.csv', skiprows=5)
+fullroute_ipv4_df = pd.read_csv('./data/fullroute_ipv4.csv', skiprows=5)
 for i,col in fullroute_ipv4_df.iterrows():
 	iprange = col['#NetworkAddress']
 	subnet = col['SubnetLength']
@@ -58,9 +65,12 @@ def get_path(ipaddr):
 	except KeyError:
 		return None
 
-#serverasnrtt_df = pd.read_csv('serverasnrtt.csv')
-serverasnrtt_df = pd.read_csv('clientasnrtt.csv')
-# 重複を削除
+input_csv = sys.argv[1]
+output_csv = sys.argv[2]
+
+serverasnrtt_df = pd.read_csv(input_csv) #serverasnrtt.csv
+#serverasnrtt_df = pd.read_csv('./data/clientasnrtt.csv')
+# 重複を削除 #ここは各ipアドレスに対しての経路を作っているので重複してても同じ経路なので削除していい
 od_df = serverasnrtt_df['ipaddr'].drop_duplicates()
 
 # DataFrame に戻して path 列を作成
@@ -80,4 +90,4 @@ expanded_df = exploded_df[['ipaddr']].join(encoded_df).groupby(level=0).max()
 #expanded_df = expanded_df.astype(int)
 print(expanded_df)
 
-expanded_df.to_csv('routing_matrix3.csv', index=False)
+expanded_df.to_csv(output_csv, index=False) #routing_matrix_server.csv
