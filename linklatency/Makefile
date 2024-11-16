@@ -23,9 +23,11 @@ $(odasnrtt): $(odrtt)
 
 ifeq ($(type), client)
 $(odrtt): /data/vpngate/dump_local-20240514-00.pcap
+	make -C rttextractor/
 	./rttextractor /data/vpngate/dump_local-20240514-00.pcap 10.0.0.0/8 $(odrtt)
 else ifeq ($(type), server)
 $(odrtt): /data/vpngate/dump_global-20240514-00.pcap
+	make -C rttextractor/
 	./rttextractor /data/vpngate/dump_global-20240514-00.pcap 219.100.37.0/24 $(odrtt)
 endif
 
