@@ -150,7 +150,7 @@ vpnサーバからsyn/ackを送ってからackが返ってくるまでの時間�
 			//std::cout << novpnip << std::endl;
 			iprttmp[hash].ipaddress = novpnip;
 			uint32_t seqnum = ntohl(tcpheader->sequenceNumber);
-			iprttmp[hash].syntimemp[seqnum] = rawPacket.getPacketTimeStamp();
+			iprttmp[hash].syntimemp[seqnum] = rawPacket.getPacketTimeStamp(); //syntimeと言いつつこれはsynacktime
 		//} else if (tcpheader->synFlag && tcpheader->pshFlag) { // pshFlag necessary?
 		} else if (tcpheader->ackFlag && novpnip == srcIP) { // novpnip -a-> capture -b-> vpn (aが知りたい) ack
 			uint32_t hash = pcpp::hash5Tuple(&parsedPacket);
