@@ -32,10 +32,10 @@ typedef struct rttInfo {
 	std::vector<tsRtt_t> rttvec;
 } rttInfo_t;
 
-typedef enum target {
+typedef enum kind {
 	USER,
 	ACCESS,
-} target_t;
+} kind_t;
 
 #endif
 

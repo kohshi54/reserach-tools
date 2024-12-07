@@ -5,8 +5,7 @@
 	pcap rtt extractor
 	argv[1] pcapfile
 	argv[2] serverIP_range
-	argv[3] 'server' or 'client'
-	argv[4] outfile (option)
+	argv[3] outfile (option)
 */
 
 double timespecToMs(const struct timespec& ts) {
@@ -17,24 +16,25 @@ int main(int argc, char* argv[])
 {
 	if (argc < 4) {
 		std::cerr << "invalid input" << std::endl;
-		std::cerr << "format: pcapfile, serverIp_range(219.100.37.0/24), 'server', (optinal) outfile" << std::endl;
+		std::cerr << "format: pcapfile, serverIp_range(219.100.37.0/24), (optinal) outfile" << std::endl;
 		return 1;
 	}
 	std::string pcapfile = argv[1];
 	std::string serverNet = argv[2];
-	target_t target;
-	if (argv[3] == "server") {
-		target = ACCESS;
-	} else if (argv[3] == "client") {
-		target = USER;
-	}
 	std::ofstream ofs;
-	if (argc == 5) {
-		std::string outfile = argv[4];
+	if (argc == 4) {
+		std::string outfile = argv[3];
 		ofs.open(outfile);
 		if (!ofs) {
 			std::cerr << "Error opening outfile" << std::endl;
 		}
+	}
+
+	kind_t kind;
+	if (serverNet == "219.100.37.0/24") {
+		kind == USER; //dump_globalはユーザ側
+	} else if (serverNet == "10.0.0.0/8") {
+		kind == ACCESS; //dump_localはサーバ側
 	}
 
 	pcpp::IFileReaderDevice* reader = pcpp::IFileReaderDevice::getReader(pcapfile);
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 		vpnサーバからsyn/ackを送ってからackが返ってくるまでの時間が経路遅延.
 		(ユーザがクライアント）
 		*/
-		if (target == ACCESS) { //vpnサーバ - アクセス先サーバの遅延 synに対するsyn/ack
+		if (kind == ACCESS) { //vpnサーバ - アクセス先サーバの遅延 synに対するsyn/ack
 			pcpp::tcphdr* tcpheader = tcpLayer->getTcpHeader();
 			//if (tcpheader->synFlag && tcpheader->ackFlag && tcpheader->pshFlag) { // pshFlag?
 			if (tcpheader->synFlag && tcpheader->ackFlag && novpnip == srcIP) { // novpnip -a-> capture -b-> vpn (aが知りたい)
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 				//std::cout << seqnum << std::endl;
 			}
 		}
-		else if (target == USER) { //vpnサーバ - クライアントの遅延 syn/ackに対するack
+		else if (kind == USER) { //vpnサーバ - クライアントの遅延 syn/ackに対するack
 			pcpp::tcphdr* tcpheader = tcpLayer->getTcpHeader();
 			//if (tcpheader->synFlag && tcpheader->ackFlag && tcpheader->pshFlag) { // pshFlag?
 			if (tcpheader->synFlag && tcpheader->ackFlag && novpnip == dstIP) { // novpnip <-a- capture <-b- vpn (aが知りたい) syn/ack
