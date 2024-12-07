@@ -150,13 +150,13 @@ vpnサーバからsyn/ackを送ってからackが返ってくるまでの時間�
 			//std::cout << novpnip << std::endl;
 			iprttmp[hash].ipaddress = novpnip;
 			uint32_t seqnum = ntohl(tcpheader->sequenceNumber);
-			iprttmp[hash].syntimemp[seqnum] = rawPacket.getPacketTimeStamp(); //syntimeと言いつつこれはsynacktime
+			iprttmp[hash].syntimemp[seqnum] = rawPacket.getPacketTimeStamp(); //syntimeと言いつつこれはsynacktime (todo:変数名修正)
 		//} else if (tcpheader->synFlag && tcpheader->pshFlag) { // pshFlag necessary?
 		} else if (tcpheader->ackFlag && novpnip == srcIP) { // novpnip -a-> capture -b-> vpn (aが知りたい) ack
 			uint32_t hash = pcpp::hash5Tuple(&parsedPacket);
 			uint32_t acknum = ntohl(tcpheader->ackNumber);
 			if (iprttmp[hash].syntimemp.find(acknum - 1) != iprttmp[hash].syntimemp.end()) {
-				struct timespec syntime = iprttmp[hash].syntimemp[acknum - 1];
+				struct timespec syntime = iprttmp[hash].syntimemp[acknum - 1]; //syntimeと言いつつこれはsynacktime
 				struct timespec synacktime = rawPacket.getPacketTimeStamp();
 				double starttime = syntime.tv_sec + (syntime.tv_nsec / 1e9);
 				double endtime = synacktime.tv_sec + (synacktime.tv_nsec / 1e9);
@@ -171,7 +171,7 @@ vpnサーバからsyn/ackを送ってからackが返ってくるまでの時間�
     }
 
 	if (ofs.is_open()) {
-		ofs << "ipaddr,rtt,syntime(ms),synacktime(ms),rtt2" << std::endl;
+		ofs << "ipaddr,rtt,syntime(ms),synacktime(ms),rtt2" << std::endl; //vpn<->clientの場合はsyntimeがsynacktime,synacktimeがack
 	} else {
 		std::cout << "ipaddr,rtt,syntime(ms),synacktime(ms),rtt2" << std::endl;
 	}
