@@ -32,10 +32,11 @@ int main(int argc, char* argv[])
 
 	kind_t kind;
 	if (serverNet == "219.100.37.0/24") {
-		kind == USER; //dump_globalはユーザ側
+		kind = USER; //dump_globalはユーザ側
 	} else if (serverNet == "10.0.0.0/8") {
-		kind == ACCESS; //dump_localはサーバ側
+		kind = ACCESS; //dump_localはサーバ側
 	}
+	std::cout << ((kind == USER) ? "user" : "server") << std::endl;
 
 	pcpp::IFileReaderDevice* reader = pcpp::IFileReaderDevice::getReader(pcapfile);
 	if (!reader->open()) {
